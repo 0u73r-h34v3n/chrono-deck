@@ -1,0 +1,10 @@
+{
+  "name": "Chrono Deck",
+  "author": "ynhhoJ",
+  "flags": ["debug"],
+  "publish": {
+    "tags": ["game", "info", "meta-deck", "meta", "deck", "plugin", "chrono"],
+    "description": "Decky plugin to show metadata of games runed by emulator.",
+    "image": "https://opengraph.githubassets.com/1/0u73r-h34v3n/chrono-deck"
+  }
+}

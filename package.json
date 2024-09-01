@@ -1,0 +1,56 @@
+{
+  "name": "chrono-deck",
+  "version": "0.0.1",
+  "description": "Decky plugin to show metadata of games runed by emulator.",
+  "scripts": {
+    "build": "shx rm -rf dist && rollup -c",
+    "lint": "tsc --noEmit & biome lint ./src/**/* & biome format ./src/**/* & pnpm eslint ./src/**/*",
+    "watch": "rollup -c -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0u73r-h34v3n/chrono-deck.git"
+  },
+  "keywords": ["decky", "plugin", "steam-deck", "deck", "meta-deck", "meta"],
+  "author": "ynhhoJ",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/0u73r-h34v3n/chrono-deck/issues"
+  },
+  "homepage": "https://github.com/0u73r-h34v3n/chrono-deck#readme",
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3",
+    "@eslint/js": "^9.9.1",
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.7",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/bun": "^1.1.8",
+    "@types/react": "18.3.3",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react": "^7.35.0",
+    "globals": "^15.9.0",
+    "rollup": "^4.21.2",
+    "rollup-plugin-external-globals": "^0.12.0",
+    "rollup-plugin-import-assets": "^1.1.1",
+    "shx": "^0.3.4",
+    "tslib": "^2.7.0",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.3.0"
+  },
+  "dependencies": {
+    "@decky/api": "^1.1.2",
+    "@decky/ui": "^4.7.1",
+    "async-wait-until": "^2.0.12",
+    "fastest-levenshtein": "^1.0.16",
+    "mobx": "^6.13.1",
+    "react-icons": "^5.3.0",
+    "react-router": "^6.26.1"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["react", "react-dom"]
+    }
+  }
+}
