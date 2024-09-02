@@ -9,7 +9,6 @@ import {
   type StoreCategory,
 } from "../enums";
 import { GamesMetadata } from "../gamesMetadata";
-import logger from "../utils/logger";
 
 function routePatch(path: string, patch: RoutePatch): Mountable {
   return {
@@ -47,8 +46,6 @@ export interface MetadataData {
 export function patchAppPage(): Mountable {
   return routePatch("/library/app/:appid", (props) => {
     const { children } = props;
-
-    logger.debug("[patchAppPage][routePatch] Props: ", props);
 
     // @ts-expect-error `props` actually exists
     afterPatch(children.props, "renderFunc", (_, ret1) => {

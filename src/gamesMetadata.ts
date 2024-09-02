@@ -1,4 +1,5 @@
 import { fetchNoCors } from "@decky/api";
+import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
 import {
   APP_TYPE,
@@ -214,6 +215,44 @@ export class GamesMetadata {
   }
 
   private static async initializeGamesMetadata(applicationsIds: Array<number>) {
+    logger.debug(
+      "[GamesMetadata][initializeGamesMetadata] Wait for estabilishing connect with API...",
+    );
+
+    await waitUntil(
+      async () => {
+        const response = await fetchNoCors(
+          "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              apiKey:
+                "8lTTig5uhPYa5tpl1Buusi9ADSq2i37Xd4xNdt5C2t9cPPyV5a4DQWKsqqSaNVSs",
+            },
+            body: JSON.stringify({
+              collection: "games",
+              database: "games_info",
+              dataSource: "Cluster0",
+              pipeline: [
+                {
+                  $limit: 1,
+                },
+              ],
+            }),
+          },
+        );
+
+        return !isNil(response) && response.ok;
+      },
+      { timeout: 5000, intervalBetweenAttempts: 500 },
+    );
+
+    logger.debug(
+      "[GamesMetadata][initializeGamesMetadata] Starting fetching games metadata...",
+    );
+
     for (const applicationId of applicationsIds) {
       await GamesMetadata.fetchAndSaveGameMetadata(applicationId);
     }
