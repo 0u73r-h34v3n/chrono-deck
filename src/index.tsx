@@ -144,43 +144,45 @@ export default definePlugin(() => {
             // @ts-expect-error Add types later
             const appData = appDetailsStore.GetAppData(args[0]);
 
-            if (appData && !appData?.associationData) {
-              const gameDevelopersAndPublishers =
-                GamesMetadata.getGameDevelopersAndPublishers(
-                  appData.details.unAppID,
-                );
+            if (!appData) {
+              return callOriginal;
+            }
 
-              if (isNil(gameDevelopersAndPublishers)) {
-                return;
+            const gameDevelopersAndPublishers =
+              GamesMetadata.getGameDevelopersAndPublishers(
+                appData.details.unAppID,
+              );
+
+            if (isNil(gameDevelopersAndPublishers)) {
+              return callOriginal;
+            }
+
+            const { developers, publishers } = gameDevelopersAndPublishers;
+
+            const getMappedArray = (
+              array: Nullable<typeof developers | typeof publishers>,
+            ) => {
+              if (isNil(array)) {
+                return [];
               }
 
-              const { developers, publishers } = gameDevelopersAndPublishers;
+              return array.map((value) => ({ strName: value, strURL: "" }));
+            };
 
-              const getMappedArray = (
-                array: Nullable<typeof developers | typeof publishers>,
-              ) => {
-                if (isNil(array)) {
-                  return [];
-                }
-
-                return array.map((value) => ({ strName: value, strURL: "" }));
+            stateTransaction(() => {
+              appData.associationData = {
+                rgDevelopers: getMappedArray(developers),
+                rgPublishers: getMappedArray(publishers),
+                rgFranchises: [],
               };
 
-              stateTransaction(() => {
-                appData.associationData = {
-                  rgDevelopers: getMappedArray(developers),
-                  rgPublishers: getMappedArray(publishers),
-                  rgFranchises: [],
-                };
-
-                appDetailsCache.SetCachedDataForApp(
-                  args[0],
-                  "associations",
-                  1,
-                  appData.associationData,
-                );
-              });
-            }
+              appDetailsCache.SetCachedDataForApp(
+                args[0],
+                "associations",
+                1,
+                appData.associationData,
+              );
+            });
           }
 
           return callOriginal;

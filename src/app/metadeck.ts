@@ -74,7 +74,6 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
           }
 
           if (!pathname.includes("/library/app/")) {
-            logger.debug("[addPatchMount][BIsModOrShortcut] /library/app/");
             return isModOrShortcut;
           }
 
