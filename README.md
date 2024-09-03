@@ -11,6 +11,17 @@ Help me to add more information: [Google Forms](https://docs.google.com/forms/d/
 
 <img src="./images/example.png"/>
 
+<span style="color: orange; font-weight: bold;"> 
+  
+
+> [!IMPORTANT]
+> Internet connection is mandatory.
+> 
+> If some of your games are detected wrongly:
+>   1. Check if **Display Name** of a game is correct.
+>   2. Verify in **Google Sheets** exists game with your name
+
+
 <hr />
 * - very basic information is present. It may not show actuall state of a game.
 
