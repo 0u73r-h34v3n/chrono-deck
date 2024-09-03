@@ -246,7 +246,7 @@ export class GamesMetadata {
 
         return !isNil(response) && response.ok;
       },
-      { timeout: 5000, intervalBetweenAttempts: 500 },
+      { timeout: 10000, intervalBetweenAttempts: 500 },
     );
 
     logger.debug(
@@ -409,6 +409,14 @@ export class GamesMetadata {
   public static async initialize() {
     const allNonSteamAppIds = GamesMetadata.getAllNonSteamAppIds();
 
-    GamesMetadata.initializeGamesMetadata(allNonSteamAppIds);
+    GamesMetadata.initializeGamesMetadata(allNonSteamAppIds).catch((error) => {
+      logger.error("Initialization failed. Error: ", error);
+
+      toaster.toast({
+        title: "Chrono Deck",
+        body: `${error}`,
+        duration: 15000,
+      });
+    });
   }
 }

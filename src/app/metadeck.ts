@@ -3,7 +3,6 @@ import type { SteamAppOverview } from "../../types/steamTypes";
 import { APP_TYPE } from "../enums";
 import { GamesMetadata } from "../gamesMetadata";
 import { isNil } from "../utils/isNil";
-import logger from "../utils/logger";
 import type { MountManager } from "./system";
 
 export function getMetaDeckMagicMethods(mountManager: MountManager) {
