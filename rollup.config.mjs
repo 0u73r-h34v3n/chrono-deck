@@ -4,7 +4,6 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import replace from "@rollup/plugin-replace";
 import typescript from "@rollup/plugin-typescript";
 import { defineConfig } from "rollup";
-// import importAssets from "rollup-plugin-import-assets";
 
 import externalGlobals from "rollup-plugin-external-globals";
 import pluginJson from "./plugin.json" with { type: "json" };
