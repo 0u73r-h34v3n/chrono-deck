@@ -1,4 +1,4 @@
-import { fetchNoCors } from "@decky/api";
+import { fetchNoCors, toaster } from "@decky/api";
 import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
 import {
@@ -253,9 +253,19 @@ export class GamesMetadata {
       "[GamesMetadata][initializeGamesMetadata] Starting fetching games metadata...",
     );
 
+    toaster.toast({
+      title: "Chrono Deck",
+      body: "Starting fetching metadata for emulated games...",
+    });
+
     for (const applicationId of applicationsIds) {
       await GamesMetadata.fetchAndSaveGameMetadata(applicationId);
     }
+
+    toaster.toast({
+      title: "Chrono Deck",
+      body: `Succesefull fetched metadata for ${GamesMetadata.gamesMetadata.size} games.`,
+    });
   }
 
   public static getGameDevelopersAndPublishers(applicationId: number) {
