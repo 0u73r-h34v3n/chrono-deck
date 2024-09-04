@@ -47,7 +47,6 @@ export function patchAppPage(): Mountable {
   return routePatch("/library/app/:appid", (props) => {
     const { children } = props;
 
-    // @ts-expect-error `props` actually exists
     afterPatch(children.props, "renderFunc", (_, ret1) => {
       const overview: SteamAppOverview = ret1.props?.children?.props?.overview;
 
