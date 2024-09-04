@@ -33,6 +33,24 @@ type GameMetadataRaw = Omit<GameMetadata, "category"> & {
 };
 
 export class GamesMetadata {
+  private static API_URL =
+    "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate";
+
+  private static FETCH_HEADERS = {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      apiKey:
+        "8lTTig5uhPYa5tpl1Buusi9ADSq2i37Xd4xNdt5C2t9cPPyV5a4DQWKsqqSaNVSs",
+    },
+  };
+
+  private static FETCH_BODY = {
+    collection: "games",
+    database: "games_info",
+    dataSource: "Cluster0",
+  };
+
   public static gamesMetadata = new Map<number, GameMetadata>();
 
   private static getAllNonSteamAppIds() {
@@ -40,36 +58,26 @@ export class GamesMetadata {
   }
 
   private static async findGamesWithSameTitle(displayName: string) {
-    const response = await fetchNoCors(
-      "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          apiKey:
-            "8lTTig5uhPYa5tpl1Buusi9ADSq2i37Xd4xNdt5C2t9cPPyV5a4DQWKsqqSaNVSs",
-        },
-        body: JSON.stringify({
-          collection: "games",
-          database: "games_info",
-          dataSource: "Cluster0",
-          pipeline: [
-            {
-              $search: {
-                text: {
-                  path: "titles",
-                  query: displayName,
-                },
+    const response = await fetchNoCors(GamesMetadata.API_URL, {
+      method: "POST",
+      ...GamesMetadata.FETCH_HEADERS,
+      body: JSON.stringify({
+        ...GamesMetadata.FETCH_BODY,
+        pipeline: [
+          {
+            $search: {
+              text: {
+                path: "titles",
+                query: displayName,
               },
             },
-            {
-              $limit: 5,
-            },
-          ],
-        }),
-      },
-    );
+          },
+          {
+            $limit: 5,
+          },
+        ],
+      }),
+    });
 
     if (isNil(response)) {
       // eslint-disable-next-line
@@ -221,28 +229,18 @@ export class GamesMetadata {
 
     await waitUntil(
       async () => {
-        const response = await fetchNoCors(
-          "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              apiKey:
-                "8lTTig5uhPYa5tpl1Buusi9ADSq2i37Xd4xNdt5C2t9cPPyV5a4DQWKsqqSaNVSs",
-            },
-            body: JSON.stringify({
-              collection: "games",
-              database: "games_info",
-              dataSource: "Cluster0",
-              pipeline: [
-                {
-                  $limit: 1,
-                },
-              ],
-            }),
-          },
-        );
+        const response = await fetchNoCors(GamesMetadata.API_URL, {
+          method: "POST",
+          ...GamesMetadata.FETCH_HEADERS,
+          body: JSON.stringify({
+            ...GamesMetadata.FETCH_BODY,
+            pipeline: [
+              {
+                $limit: 1,
+              },
+            ],
+          }),
+        });
 
         return !isNil(response) && response.ok;
       },
