@@ -1,5 +1,7 @@
 import {
+  ButtonItem,
   PanelSection,
+  PanelSectionRow,
   type Patch,
   afterPatch,
   callOriginal,
@@ -7,6 +9,7 @@ import {
   replacePatch,
   staticClasses,
 } from "@decky/ui";
+import { FaSync } from "react-icons/fa";
 import { FaSketch } from "react-icons/fa6";
 
 import type { SteamAppOverview } from "../types/steamTypes";
@@ -23,6 +26,8 @@ import { patchAppPage } from "./steam-ui/patches";
 import { isNil } from "./utils/isNil";
 import logger from "./utils/logger";
 import { stateTransaction } from "./utils/stateTransaction";
+
+const refreshMetadata = GamesMetadata.initialize;
 
 export default definePlugin(() => {
   logger.debug("Initializing...");
@@ -204,7 +209,19 @@ export default definePlugin(() => {
 
   return {
     title: <div className={staticClasses.Title}>Example Plugin</div>,
-    content: <PanelSection>Nothing here yet...</PanelSection>,
+    content: (
+      <PanelSection>
+        <PanelSectionRow>
+          <ButtonItem
+            onClick={refreshMetadata}
+            layout="below"
+            bottomSeparator="none"
+          >
+            <FaSync /> Refresh
+          </ButtonItem>
+        </PanelSectionRow>
+      </PanelSection>
+    ),
     icon: <FaSketch />,
     onDismount() {
       unregister();
