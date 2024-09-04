@@ -254,7 +254,7 @@ export class GamesMetadata {
     );
 
     toaster.toast({
-      title: "Chrono Deck",
+      title: "ChronoDeck",
       body: "Starting fetching metadata for emulated games...",
     });
 
@@ -263,7 +263,7 @@ export class GamesMetadata {
     }
 
     toaster.toast({
-      title: "Chrono Deck",
+      title: "ChronoDeck",
       body: `Succesefull fetched metadata for ${GamesMetadata.gamesMetadata.size} games.`,
     });
   }
@@ -413,7 +413,7 @@ export class GamesMetadata {
       logger.error("Initialization failed. Error: ", error);
 
       toaster.toast({
-        title: "Chrono Deck",
+        title: "ChronoDeck",
         body: `${error}`,
         duration: 15000,
       });

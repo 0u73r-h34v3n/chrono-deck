@@ -1,4 +1,4 @@
-<h1 align="center"> Chrono Deck plugin for Decky Loader</h1>
+<h1 align="center"> ChronoDeck plugin for Decky Loader</h1>
 
 <div align="center" style="display: flex;">
 
