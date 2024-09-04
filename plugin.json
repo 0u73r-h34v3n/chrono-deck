@@ -2,6 +2,7 @@
   "name": "Chrono Deck",
   "author": "ynhhoJ",
   "flags": [],
+  "api_version": 1,
   "publish": {
     "tags": ["game", "info", "meta-deck", "meta", "deck", "plugin", "chrono"],
     "description": "Decky plugin to show metadata of games runed by emulator.",
