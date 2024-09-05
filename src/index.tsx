@@ -14,12 +14,7 @@ import { FaSketch } from "react-icons/fa6";
 
 import type { SteamAppOverview } from "../types/steamTypes";
 import { getMetaDeckMagicMethods } from "./app/metadeck";
-import {
-  EventBus,
-  MountManager,
-  type Mountable,
-  systemClock,
-} from "./app/system";
+import { EventBus, MountManager, systemClock } from "./app/system";
 import { APP_TYPE } from "./enums";
 import { GamesMetadata } from "./gamesMetadata";
 import { patchAppPage } from "./steam-ui/patches";
@@ -36,13 +31,7 @@ export default definePlugin(() => {
   const clock = systemClock;
   const mountManager = new MountManager(eventBus, clock);
 
-  const mounts: Mountable[] = [];
-
-  mounts.push(patchAppPage());
-
-  for (const mount of mounts) {
-    mountManager.addMount(mount);
-  }
+  mountManager.addMount(patchAppPage());
 
   mountManager.addPatchMount({
     patch(): Patch {
