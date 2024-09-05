@@ -398,12 +398,6 @@ export class GamesMetadata {
     ).steam_hw_compat_category_packed = gameCompatibility;
   }
 
-  public static updateAllGamesCompatibilitiesStatusIfNeeded() {
-    for (const applicationId of [...GamesMetadata.gamesMetadata.keys()]) {
-      GamesMetadata.updateGameCompatibilityStatusIfNeeded(applicationId);
-    }
-  }
-
   public static async initialize() {
     const allNonSteamAppIds = GamesMetadata.getAllNonSteamAppIds();
 
