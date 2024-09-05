@@ -28,6 +28,10 @@
 
 Want to help improve the plugin? Submit your feedback or contribute to the supported games list by filling out this [Google Form](https://docs.google.com/forms/d/1Wp2sE3oI7JI1smGe_vHYUI_HMI_GLqiK9_X5En8rQdU).
 
+## Known issues
+After press `Play` button, **Game Info** may disappear. This happens due to some internal conflicts between showing *game information* and run non-steam game. At the moment i didn't find perfect way to fix this.
+**PR** is highly appreciated.
+
 ---
 
 > [!TIP]
