@@ -45,13 +45,13 @@ export interface MetadataData {
 
 export function patchAppPage(): Mountable {
   return routePatch("/library/app/:appid", (props) => {
-    const { children } = props;
-
-    afterPatch(children.props, "renderFunc", (_, ret1) => {
-      const overview: SteamAppOverview = ret1.props?.children?.props?.overview;
+    afterPatch(props.children.props, "renderFunc", (_, parameters) => {
+      const overview: SteamAppOverview =
+        parameters.props?.children?.props?.overview;
 
       if (overview.app_type === APP_TYPE.THIRD_PARTY) {
-        const details: AppDetailsStore = ret1.props?.children?.props?.details;
+        const details: AppDetailsStore =
+          parameters.props?.children?.props?.details;
         const applicationId: number = overview.appid;
 
         const metadata = GamesMetadata.getMetadataForApplication(applicationId);
@@ -70,7 +70,7 @@ export function patchAppPage(): Mountable {
         });
       }
 
-      return ret1;
+      return parameters;
     });
 
     return props;
