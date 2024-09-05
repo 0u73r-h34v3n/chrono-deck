@@ -6,29 +6,52 @@ import { debounce } from "../utils/debounce";
 import { isNil } from "../utils/isNil";
 import type { MountManager } from "./system";
 
-let isInitializedInformationPage = false;
+let shouldWeLieToSteam = true;
+let isBlockedLieToSteamFromGetPerClientData = false;
+let oldPathName: Nullable<string>;
 
-function setInitializationInformationPage() {
-  isInitializedInformationPage = true;
+function resetShouldSteamRunGameState() {
+  shouldWeLieToSteam = true;
 }
 
-const markAsDoneInitializedInformationPage = debounce(
-  setInitializationInformationPage,
-  100,
+function removeBlockFromSteamLie() {
+  isBlockedLieToSteamFromGetPerClientData = false;
+}
+
+const resetShouldSteamRunGameStateDebounce = debounce(
+  resetShouldSteamRunGameState,
+  300,
+  false,
+);
+
+const removeBlockFromSteamLieDebounce = debounce(
+  removeBlockFromSteamLie,
+  500,
   false,
 );
 
 export function getMetaDeckMagicMethods(mountManager: MountManager) {
   // @ts-expect-error No existent types
-  Router?.WindowStore?.GamepadUIMainWindowInstance?.m_history?.listen((e) => {
-    const { pathname } = e;
+  Router?.WindowStore?.GamepadUIMainWindowInstance?.m_history?.listen(
+    (event: { pathname: string }) => {
+      const { pathname } = event;
 
-    if (!pathname?.includes("/library/app/")) {
-      return;
-    }
+      shouldWeLieToSteam = true;
+      const gamePage = "/library/app/";
 
-    isInitializedInformationPage = false;
-  });
+      if (
+        pathname.includes(gamePage) &&
+        !isNil(oldPathName) &&
+        !oldPathName.includes(gamePage)
+      ) {
+        isBlockedLieToSteamFromGetPerClientData = true;
+
+        removeBlockFromSteamLieDebounce();
+      }
+
+      oldPathName = pathname;
+    },
+  );
 
   mountManager.addPatchMount({
     patch(): Patch {
@@ -58,6 +81,10 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
 
           if (firstState !== "selected") {
             return response;
+          }
+
+          if (!isBlockedLieToSteamFromGetPerClientData) {
+            shouldWeLieToSteam = false;
           }
 
           return response;
@@ -92,6 +119,8 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
         appStore?.allApps[0]?.__proto__,
         "BIsModOrShortcut",
         (_, isModOrShortcut) => {
+          resetShouldSteamRunGameStateDebounce();
+
           if (!isModOrShortcut) {
             return isModOrShortcut;
           }
@@ -132,9 +161,7 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
             return isModOrShortcut;
           }
 
-          if (!isInitializedInformationPage) {
-            markAsDoneInitializedInformationPage();
-
+          if (shouldWeLieToSteam) {
             return false;
           }
 
