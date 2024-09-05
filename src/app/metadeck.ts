@@ -2,10 +2,34 @@ import { type Patch, Router, afterPatch } from "@decky/ui";
 import type { SteamAppOverview } from "../../types/steamTypes";
 import { APP_TYPE } from "../enums";
 import { GamesMetadata } from "../gamesMetadata";
+import { debounce } from "../utils/debounce";
 import { isNil } from "../utils/isNil";
 import type { MountManager } from "./system";
 
+let isInitializedInformationPage = false;
+
+function setInitializationInformationPage() {
+  isInitializedInformationPage = true;
+}
+
+const markAsDoneInitializedInformationPage = debounce(
+  setInitializationInformationPage,
+  100,
+  false,
+);
+
 export function getMetaDeckMagicMethods(mountManager: MountManager) {
+  // @ts-expect-error No existent types
+  Router?.WindowStore?.GamepadUIMainWindowInstance?.m_history?.listen((e) => {
+    const { pathname } = e;
+
+    if (!pathname?.includes("/library/app/")) {
+      return;
+    }
+
+    isInitializedInformationPage = false;
+  });
+
   mountManager.addPatchMount({
     patch(): Patch {
       return afterPatch(
@@ -15,6 +39,28 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
           GamesMetadata.updateGameCompatibilityStatusIfNeeded(applicationId);
 
           return applicationId;
+        },
+      );
+    },
+  });
+
+  mountManager.addPatchMount({
+    patch(): Patch {
+      return afterPatch(
+        appStore.allApps[0].__proto__,
+        "GetPerClientData",
+        (clientDataState, response) => {
+          if (isNil(clientDataState) || isNil(clientDataState[0])) {
+            return response;
+          }
+
+          const firstState = clientDataState[0];
+
+          if (firstState !== "selected") {
+            return response;
+          }
+
+          return response;
         },
       );
     },
@@ -86,7 +132,13 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
             return isModOrShortcut;
           }
 
-          return false;
+          if (!isInitializedInformationPage) {
+            markAsDoneInitializedInformationPage();
+
+            return false;
+          }
+
+          return isModOrShortcut;
         },
       );
     },
