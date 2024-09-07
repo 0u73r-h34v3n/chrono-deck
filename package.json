@@ -20,6 +20,7 @@
   "homepage": "https://github.com/0u73r-h34v3n/chrono-deck#readme",
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
+    "@decky/rollup": "^1.0.1",
     "@eslint/js": "^9.9.1",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
