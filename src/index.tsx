@@ -206,7 +206,17 @@ export default definePlugin(() => {
             layout="below"
             bottomSeparator="none"
           >
-            <FaSync /> Refresh
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FaSync />
+
+              <span style={{ marginLeft: "0.2rem" }}>Refresh</span>
+            </div>
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
