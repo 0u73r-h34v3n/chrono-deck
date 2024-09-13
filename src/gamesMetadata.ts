@@ -18,6 +18,7 @@ import {
   StoreCategory,
 } from "./enums";
 import { fetchGamesWithSameName, tryConnectToServices } from "./fetch";
+import { getMinValidSyncInterval } from "./utils/number";
 import { identifyPlatformByLaunchCommand } from "./utils/steam/identifyPlatformByLaunchCommand";
 
 export class GamesMetadata {
@@ -185,16 +186,24 @@ export class GamesMetadata {
       return false;
     }
 
-    const { lastActualizeDate } = metadata;
+    const { lastSyncDate: lastSyncDateString } = metadata;
 
-    if (isNil(lastActualizeDate)) {
+    if (isNil(lastSyncDateString)) {
       return true;
     }
 
-    const dateTest = new Date(lastActualizeDate);
-    const dateDay = new Date(dateTest.setDate(dateTest.getDate() + 1));
+    const { syncIntervalDays } = metadata;
+    const lastSyncDate = new Date(lastSyncDateString);
+    const syncInterval = getMinValidSyncInterval(syncIntervalDays);
 
-    if (typeof lastActualizeDate === "string" && dateDay > new Date()) {
+    const dateToCompareWith = new Date(
+      lastSyncDate.setDate(lastSyncDate.getDate() + syncInterval),
+    );
+
+    if (
+      typeof lastSyncDateString === "string" &&
+      dateToCompareWith > new Date()
+    ) {
       return false;
     }
 
@@ -249,7 +258,11 @@ export class GamesMetadata {
     }
 
     if (shouldGameMetadataToBeFetched) {
-      saveMetdata(new Date(), GamesMetadata.gamesMetadata);
+      saveMetdata(
+        new Date(),
+        GamesMetadata.gamesMetadata,
+        GamesMetadata.localSavedGamesMetadata.syncIntervalDays,
+      );
     }
 
     toaster.toast({
@@ -390,7 +403,11 @@ export class GamesMetadata {
   }
 
   public static async forceSync() {
-    await saveMetdata(new Date("2000"), new Map());
+    await saveMetdata(
+      new Date("2000"),
+      new Map(),
+      GamesMetadata.localSavedGamesMetadata.syncIntervalDays,
+    );
 
     await GamesMetadata.initialize();
   }
