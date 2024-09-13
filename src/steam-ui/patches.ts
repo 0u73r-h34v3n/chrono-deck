@@ -1,14 +1,10 @@
 import { type RoutePatch, routerHook } from "@decky/api";
 import { afterPatch } from "@decky/ui";
+import type { Mountable } from "@src/app/system";
+import { APP_TYPE } from "@src/enums";
+import { GamesMetadata } from "@src/gamesMetadata";
+import type { AppDetailsStore, SteamAppOverview } from "@type/steamTypes";
 import { runInAction } from "mobx";
-import type { AppDetailsStore, SteamAppOverview } from "../../types/steamTypes";
-import type { Mountable } from "../app/system";
-import {
-  APP_TYPE,
-  type SteamDeckCompatibilityCategory,
-  type StoreCategory,
-} from "../enums";
-import { GamesMetadata } from "../gamesMetadata";
 
 function routePatch(path: string, patch: RoutePatch): Mountable {
   return {

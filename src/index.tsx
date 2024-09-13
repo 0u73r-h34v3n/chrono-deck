@@ -12,15 +12,15 @@ import {
 import { FaSync } from "react-icons/fa";
 import { FaSketch } from "react-icons/fa6";
 
-import type { SteamAppOverview } from "../types/steamTypes";
+import type { SteamAppOverview } from "@type/steamTypes";
+import { isNil } from "@utils/isNil";
+import logger from "@utils/logger";
+import { stateTransaction } from "@utils/stateTransaction";
 import { getMetaDeckMagicMethods } from "./app/metadeck";
 import { EventBus, MountManager, systemClock } from "./app/system";
 import { APP_TYPE } from "./enums";
 import { GamesMetadata } from "./gamesMetadata";
 import { patchAppPage } from "./steam-ui/patches";
-import { isNil } from "./utils/isNil";
-import logger from "./utils/logger";
-import { stateTransaction } from "./utils/stateTransaction";
 
 const refreshMetadata = GamesMetadata.initialize;
 

@@ -1,4 +1,8 @@
 import { fetchNoCors, toaster } from "@decky/api";
+import type { GameMetadata, GameMetadataRaw } from "@type/gameMetadata";
+import { dateToUnixTimestamp } from "@utils/date";
+import { isNil } from "@utils/isNil";
+import logger from "@utils/logger";
 import getAppDetails from "@utils/steam/getAppDetails";
 import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
@@ -7,9 +11,6 @@ import {
   SteamDeckCompatibilityCategory,
   StoreCategory,
 } from "./enums";
-import { dateToUnixTimestamp } from "./utils/date";
-import { isNil } from "./utils/isNil";
-import logger from "./utils/logger";
 
 export class GamesMetadata {
   private static API_URL =

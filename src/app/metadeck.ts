@@ -1,5 +1,5 @@
 import { type Patch, Router, afterPatch } from "@decky/ui";
-import type { SteamAppOverview } from "../../types/steamTypes";
+import type { SteamAppOverview } from "@type/steamTypes";
 import { APP_TYPE } from "../enums";
 import { GamesMetadata } from "../gamesMetadata";
 import { debounce } from "../utils/debounce";

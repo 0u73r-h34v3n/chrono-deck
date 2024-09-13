@@ -1,7 +1,7 @@
+import logger from "@utils/logger";
 // NOTE: https://github.com/EmuDeck/MetaDeck/blob/main/src/ts/System.ts
 //       Some parts of code are from `MetaDeck` repository
 import type { ComponentType } from "react";
-import logger from "../utils/logger";
 
 export { type Clock, EventBus, MountManager, systemClock, type Mountable };
 

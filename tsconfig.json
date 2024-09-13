@@ -17,7 +17,13 @@
     "strict": true,
     "ignoreDeprecations": "5.0",
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@type/*": ["./types/*"],
+      "@utils/*": ["./src/utils/*"]
+    }
   },
   "exclude": ["node_modules", "./dist"]
 }
