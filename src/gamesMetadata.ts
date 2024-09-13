@@ -11,27 +11,6 @@ import getAppDetails from "./utils/getAppDetails";
 import { isNil } from "./utils/isNil";
 import logger from "./utils/logger";
 
-type GameMetadata = {
-  _id: string;
-  asia_release_date: string;
-  category: Array<StoreCategory>;
-  compatibility: keyof typeof SteamDeckCompatibilityCategory;
-  compatibility_notes: string;
-  developers: Array<string>;
-  europe_release_date: string;
-  full_description: string;
-  launchCommand: string;
-  north_america_release_date: string;
-  platform: string;
-  publishers: Array<string>;
-  short_description: string;
-  titles: Array<string>;
-};
-
-type GameMetadataRaw = Omit<GameMetadata, "category"> & {
-  category: string;
-};
-
 export class GamesMetadata {
   private static API_URL =
     "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate";
