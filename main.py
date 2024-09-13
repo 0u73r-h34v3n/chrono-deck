@@ -28,7 +28,11 @@ class Plugin:
                 os.path.join(decky.DECKY_PLUGIN_RUNTIME_DIR, metadata_file_name), "w"
             ) as file:
                 json.dump(
-                    {"nextActualizeDate": None, "gamesMetadata": []},
+                    {
+                        "syncIntervalDays": 1,
+                        "lastSyncDate": None,
+                        "gamesMetadata": [],
+                    },
                     file,
                     ensure_ascii=False,
                     indent=2,
