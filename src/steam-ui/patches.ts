@@ -17,28 +17,6 @@ function routePatch(path: string, patch: RoutePatch): Mountable {
   };
 }
 
-export interface Developer {
-  name: string;
-  url: string;
-}
-
-export interface Publisher {
-  name: string;
-  url: string;
-}
-
-export interface MetadataData {
-  title: string;
-  id: number;
-  description: string;
-  developers?: Developer[];
-  publishers?: Publisher[];
-  release_date?: number;
-  compat_category: SteamDeckCompatibilityCategory;
-  compat_notes?: string;
-  store_categories: StoreCategory[];
-}
-
 export function patchAppPage(): Mountable {
   return routePatch("/library/app/:appid", (props) => {
     afterPatch(props.children.props, "renderFunc", (_, parameters) => {
