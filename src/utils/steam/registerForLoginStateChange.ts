@@ -1,6 +1,6 @@
 // https://github.com/FrogTheFrog/moondeck/blob/main/src/steam-utils/registerForLoginStateChange.ts
 
-import logger from "./logger";
+import logger from "@utils/logger";
 
 /**
  * Invokes appropriate callback when user logs in or out.

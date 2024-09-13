@@ -1,4 +1,5 @@
 import { fetchNoCors, toaster } from "@decky/api";
+import getAppDetails from "@utils/steam/getAppDetails";
 import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
 import {
@@ -7,7 +8,6 @@ import {
   StoreCategory,
 } from "./enums";
 import { dateToUnixTimestamp } from "./utils/date";
-import getAppDetails from "./utils/getAppDetails";
 import { isNil } from "./utils/isNil";
 import logger from "./utils/logger";
 

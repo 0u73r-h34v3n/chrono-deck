@@ -7,6 +7,7 @@ export { type Clock, EventBus, MountManager, systemClock, type Mountable };
 
 import { routerHook } from "@decky/api";
 import type { Patch } from "@decky/ui";
+import { registerForLoginStateChange } from "@utils/steam/registerForLoginStateChange";
 import waitUntil from "async-wait-until";
 import type { Events } from "./events";
 
@@ -34,40 +35,6 @@ async function waitForServicesInitialized(): Promise<boolean> {
   return (
     (await (window as WindowEx).App?.WaitForServicesInitialized?.()) ?? false
   );
-}
-
-export function registerForLoginStateChange(
-  onLogin: (username: string) => void,
-  onLogout: () => void,
-): () => void {
-  try {
-    let isLoggedIn: boolean | null = null;
-
-    const unregister = SteamClient.User.RegisterForLoginStateChange(
-      (username: string) => {
-        if (username === "") {
-          if (isLoggedIn !== false) {
-            onLogout();
-          }
-          isLoggedIn = false;
-        } else {
-          if (isLoggedIn !== true) {
-            onLogin(username);
-          }
-          isLoggedIn = true;
-        }
-      },
-    ).unregister;
-
-    return () => {
-      unregister();
-      onLogout();
-    };
-  } catch (error) {
-    logger.error(error);
-
-    return () => {};
-  }
 }
 
 export interface PatchMountable {

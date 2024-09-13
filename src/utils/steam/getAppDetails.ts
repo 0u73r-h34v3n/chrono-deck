@@ -1,7 +1,7 @@
 // NOTE: https://github.com/SteamGridDB/decky-steamgriddb/blob/main/src/utils/getAppDetails.ts
 
 import type { AppDetails } from "@decky/ui";
-import logger from "./logger";
+import logger from "@utils/logger";
 
 /**
  * Tries to retrieve the app details from Steam.
