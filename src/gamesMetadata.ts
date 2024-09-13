@@ -60,6 +60,18 @@ export class GamesMetadata {
     return undefined;
   }
 
+  private static getGameCategoriesFromString(categories: string) {
+    const categoriesAsArray = categories.split(", ") as Array<
+      keyof typeof StoreCategory
+    >;
+
+    const categoriesIDs = categoriesAsArray
+      .map((category) => StoreCategory[category])
+      .filter((category) => !isNil(category));
+
+    return categoriesIDs;
+  }
+
   private static async indetifyExactGame(
     displayName: string,
     applicationId: number,
@@ -105,16 +117,11 @@ export class GamesMetadata {
       );
     }
 
-    const categories = gameMetadata.category.split(", ") as Array<
-      keyof typeof StoreCategory
-    >;
-    const categoriesIDs = categories
-      .map((category) => StoreCategory[category])
-      .filter((category) => !isNil(category));
-
     return {
       ...gameMetadata,
-      category: categoriesIDs,
+      category: GamesMetadata.getGameCategoriesFromString(
+        gameMetadata.category,
+      ),
       launchCommand,
     };
   }
