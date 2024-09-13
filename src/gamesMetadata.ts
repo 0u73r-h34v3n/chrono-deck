@@ -389,6 +389,12 @@ export class GamesMetadata {
     ).steam_hw_compat_category_packed = gameCompatibility;
   }
 
+  public static async forceSync() {
+    await saveMetdata(new Date("2000"), new Map());
+
+    await GamesMetadata.initialize();
+  }
+
   public static async initialize() {
     const allNonSteamAppIds = GamesMetadata.getAllNonSteamAppIds();
 

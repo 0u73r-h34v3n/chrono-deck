@@ -5,7 +5,7 @@ import {
   definePlugin,
   staticClasses,
 } from "@decky/ui";
-import { FaSync } from "react-icons/fa";
+import { FaCloudDownloadAlt, FaSync } from "react-icons/fa";
 import { FaSketch } from "react-icons/fa6";
 
 import logger from "@utils/logger";
@@ -20,6 +20,7 @@ import { patchGetDescriptions } from "./steam-patches/getDescriptions";
 import { patchGetPrimaryAppId } from "./steam-patches/getPrimaryId";
 
 const refreshMetadata = GamesMetadata.initialize;
+const forceSyncMedatadata = GamesMetadata.forceSync;
 
 export default definePlugin(() => {
   logger.debug("Initializing...");
@@ -68,6 +69,26 @@ export default definePlugin(() => {
               <FaSync />
 
               <span style={{ marginLeft: "0.2rem" }}>Refresh</span>
+            </div>
+          </ButtonItem>
+        </PanelSectionRow>
+
+        <PanelSectionRow>
+          <ButtonItem
+            onClick={forceSyncMedatadata}
+            layout="below"
+            bottomSeparator="none"
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FaCloudDownloadAlt />
+
+              <span style={{ marginLeft: "0.2rem" }}>Force Sync</span>
             </div>
           </ButtonItem>
         </PanelSectionRow>
