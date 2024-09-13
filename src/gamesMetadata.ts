@@ -60,6 +60,19 @@ export class GamesMetadata {
     return undefined;
   }
 
+  private static getClosestMatchTitleFromGamesList(
+    displayName: string,
+    gamesWithSameTitle: Array<GameMetadataRaw>,
+  ) {
+    let gameTitles: Array<string> = [];
+
+    for (const item of gamesWithSameTitle) {
+      gameTitles = [...gameTitles, ...item.titles];
+    }
+
+    return closest(displayName, gameTitles);
+  }
+
   private static getGameCategoriesFromString(categories: string) {
     const categoriesAsArray = categories.split(", ") as Array<
       keyof typeof StoreCategory
@@ -99,16 +112,16 @@ export class GamesMetadata {
 
     const platform =
       GamesMetadata.identifyPlatformByLaunchCommand(launchCommand);
+    const closestMatchTitleFromGamesList =
+      GamesMetadata.getClosestMatchTitleFromGamesList(
+        displayName,
+        gamesWithSameTitle,
+      );
 
-    let gameTitles: Array<string> = [];
-
-    for (const item of gamesWithSameTitle) {
-      gameTitles = [...gameTitles, ...item.titles];
-    }
-
-    const closestItem = closest(displayName, gameTitles);
     const gameMetadata = gamesWithSameTitle.find(
-      (item) => item.titles.includes(closestItem) && item.platform === platform,
+      (item) =>
+        item.titles.includes(closestMatchTitleFromGamesList) &&
+        item.platform === platform,
     );
 
     if (isNil(gameMetadata)) {
