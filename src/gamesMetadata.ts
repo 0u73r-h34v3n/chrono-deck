@@ -4,12 +4,14 @@ import type {
   GameMetadataRaw,
   GamesMetadataOnlyReleaseDates,
 } from "@type/gameMetadata";
+import type { LocalSavedMetadata } from "@type/localMetadata";
 import { dateToUnixTimestamp } from "@utils/date";
 import { isNil } from "@utils/isNil";
 import logger from "@utils/logger";
 import getAppDetails from "@utils/steam/getAppDetails";
 import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
+import { getMetadata, saveMetdata } from "./backEnd";
 import {
   APP_TYPE,
   SteamDeckCompatibilityCategory,
@@ -20,6 +22,8 @@ import { identifyPlatformByLaunchCommand } from "./utils/steam/identifyPlatformB
 
 export class GamesMetadata {
   public static gamesMetadata = new Map<number, GameMetadata>();
+
+  public static localSavedGamesMetadata: LocalSavedMetadata = {};
 
   private static getAllNonSteamAppIds() {
     return Array.from(collectionStore.deckDesktopApps.apps.keys());
@@ -103,6 +107,16 @@ export class GamesMetadata {
     };
   }
 
+  private static getLocallySavedGameMetadataIfPosible(applicationId: number) {
+    const { gamesMetadata } = GamesMetadata.localSavedGamesMetadata;
+
+    if (isNil(gamesMetadata)) {
+      return;
+    }
+
+    return gamesMetadata[applicationId];
+  }
+
   private static async fetchAndSaveGameMetadata(applicationId: number) {
     try {
       const appOverviewByAppId = appStore.GetAppOverviewByAppID(applicationId);
@@ -113,14 +127,23 @@ export class GamesMetadata {
         );
       }
 
-      const { display_name: displayName } = appOverviewByAppId;
-      const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
+      let game: GameMetadata;
 
-      const game = await GamesMetadata.indetifyExactGame(
-        displayName,
-        applicationId,
-        gamesWithSameTitle,
-      );
+      const metadataFromLocallSavedFile =
+        GamesMetadata.getLocallySavedGameMetadataIfPosible(applicationId);
+
+      if (!isNil(metadataFromLocallSavedFile)) {
+        game = metadataFromLocallSavedFile;
+      } else {
+        const { display_name: displayName } = appOverviewByAppId;
+        const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
+
+        game = await GamesMetadata.indetifyExactGame(
+          displayName,
+          applicationId,
+          gamesWithSameTitle,
+        );
+      }
 
       const gameCompatibility =
         SteamDeckCompatibilityCategory[game.compatibility];
@@ -137,6 +160,47 @@ export class GamesMetadata {
     }
   }
 
+  private static async shouldGameMetadataToBeFetched(
+    nonSteamApplicationsIds: Array<number>,
+  ) {
+    const metadata = await getMetadata();
+
+    GamesMetadata.localSavedGamesMetadata = metadata;
+
+    if (isNil(metadata)) {
+      return true;
+    }
+
+    const { gamesMetadata } = metadata;
+
+    if (isNil(gamesMetadata)) {
+      return true;
+    }
+
+    const hasSameGameList = nonSteamApplicationsIds.every(
+      (applicationId) => gamesMetadata[applicationId],
+    );
+
+    if (hasSameGameList) {
+      return false;
+    }
+
+    const { lastActualizeDate } = metadata;
+
+    if (isNil(lastActualizeDate)) {
+      return true;
+    }
+
+    const dateTest = new Date(lastActualizeDate);
+    const dateDay = new Date(dateTest.setDate(dateTest.getDate() + 1));
+
+    if (typeof lastActualizeDate === "string" && dateDay > new Date()) {
+      return false;
+    }
+
+    return true;
+  }
+
   private static async initializeGamesMetadata(
     nonSteamApplicationsIds: Array<number>,
   ) {
@@ -144,26 +208,48 @@ export class GamesMetadata {
       "[GamesMetadata][initializeGamesMetadata] Wait for estabilishing connect with API...",
     );
 
-    await waitUntil(
-      async () => {
-        const response = await tryConnectToServices();
+    const shouldGameMetadataToBeFetched =
+      await GamesMetadata.shouldGameMetadataToBeFetched(
+        nonSteamApplicationsIds,
+      );
 
-        return !isNil(response) && response.ok;
-      },
-      { timeout: 10000, intervalBetweenAttempts: 500 },
-    );
+    if (shouldGameMetadataToBeFetched) {
+      await waitUntil(
+        async () => {
+          const response = await tryConnectToServices();
 
-    logger.debug(
-      "[GamesMetadata][initializeGamesMetadata] Starting fetching games metadata...",
-    );
+          return !isNil(response) && response.ok;
+        },
+        { timeout: 10000, intervalBetweenAttempts: 500 },
+      );
 
-    toaster.toast({
-      title: "ChronoDeck",
-      body: "Starting fetching metadata for emulated games...",
-    });
+      GamesMetadata.localSavedGamesMetadata.gamesMetadata = {};
+
+      logger.debug(
+        "[GamesMetadata][initializeGamesMetadata] Starting fetching games metadata...",
+      );
+
+      toaster.toast({
+        title: "ChronoDeck",
+        body: "Starting fetching metadata for emulated games...",
+      });
+    } else {
+      logger.debug(
+        "[GamesMetadata][initializeGamesMetadata] Starting loading games metadata from local file...",
+      );
+
+      toaster.toast({
+        title: "ChronoDeck",
+        body: "Starting loading games metadata from local file...",
+      });
+    }
 
     for (const applicationId of nonSteamApplicationsIds) {
       await GamesMetadata.fetchAndSaveGameMetadata(applicationId);
+    }
+
+    if (shouldGameMetadataToBeFetched) {
+      saveMetdata(new Date(), GamesMetadata.gamesMetadata);
     }
 
     toaster.toast({
