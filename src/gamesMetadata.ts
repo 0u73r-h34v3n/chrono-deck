@@ -1,5 +1,9 @@
 import { fetchNoCors, toaster } from "@decky/api";
-import type { GameMetadata, GameMetadataRaw } from "@type/gameMetadata";
+import type {
+  GameMetadata,
+  GameMetadataRaw,
+  GamesMetadataOnlyReleaseDates,
+} from "@type/gameMetadata";
 import { dateToUnixTimestamp } from "@utils/date";
 import { isNil } from "@utils/isNil";
 import logger from "@utils/logger";
@@ -198,11 +202,9 @@ export class GamesMetadata {
     }
   }
 
-  public static getMetadataForApplication(applicationId: number) {
-    return GamesMetadata.gamesMetadata.get(applicationId);
-  }
-
-  private static async initializeGamesMetadata(applicationsIds: Array<number>) {
+  private static async initializeGamesMetadata(
+    nonSteamApplicationsIds: Array<number>,
+  ) {
     logger.debug(
       "[GamesMetadata][initializeGamesMetadata] Wait for estabilishing connect with API...",
     );
@@ -236,7 +238,7 @@ export class GamesMetadata {
       body: "Starting fetching metadata for emulated games...",
     });
 
-    for (const applicationId of applicationsIds) {
+    for (const applicationId of nonSteamApplicationsIds) {
       await GamesMetadata.fetchAndSaveGameMetadata(applicationId);
     }
 
@@ -244,6 +246,10 @@ export class GamesMetadata {
       title: "ChronoDeck",
       body: `Succesefull fetched metadata for ${GamesMetadata.gamesMetadata.size} games.`,
     });
+  }
+
+  public static getMetadataForApplication(applicationId: number) {
+    return GamesMetadata.gamesMetadata.get(applicationId);
   }
 
   public static getGameDevelopersAndPublishers(applicationId: number) {
@@ -293,26 +299,21 @@ export class GamesMetadata {
       return;
     }
 
-    const { europe_release_date } = gameMetadata;
+    const releaseDateKeys: Array<keyof GamesMetadataOnlyReleaseDates> = [
+      "europe_release_date",
+      "north_america_release_date",
+      "asia_release_date",
+    ];
 
-    if (europe_release_date) {
-      const date = new Date(europe_release_date);
+    for (const key of releaseDateKeys) {
+      const releaseDate =
+        gameMetadata[key as keyof GamesMetadataOnlyReleaseDates];
 
-      return dateToUnixTimestamp(date);
-    }
+      if (isNil(releaseDate)) {
+        continue;
+      }
 
-    const { north_america_release_date } = gameMetadata;
-
-    if (north_america_release_date) {
-      const date = new Date(north_america_release_date);
-
-      return dateToUnixTimestamp(date);
-    }
-
-    const { asia_release_date } = gameMetadata;
-
-    if (asia_release_date) {
-      const date = new Date(asia_release_date);
+      const date = new Date(releaseDate);
 
       return dateToUnixTimestamp(date);
     }

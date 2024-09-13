@@ -20,3 +20,8 @@ type GameMetadata = {
 type GameMetadataRaw = Omit<GameMetadata, "category"> & {
   category: string;
 };
+
+type GamesMetadataOnlyReleaseDates = Pick<
+  GameMetadata,
+  "europe_release_date" | "north_america_release_date" | "asia_release_date"
+>;
