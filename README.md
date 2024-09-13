@@ -24,6 +24,11 @@
 2. **Verify Game in Database:**
    If a game is not detected correctly, make sure it exists in our [Google Sheets Database](https://docs.google.com/spreadsheets/d/1lF2zJN4S7Ktu8xaLgyymWm9I8kMW7ts2rR6cVj3ZmEA).
 
+3. You can modify locally **Games Metadata** in file `/home/deck/homebrew/data/ChronoDeck/metadata.json`
+4. Once per ~`24` hours are executed automatically sync with **DataBase**.
+   
+   If you want to control `Sync Interval` you can change value of  `syncIntervalDays` from `metadata.json` to **an integer value**.
+
 ## Contribute
 
 Want to help improve the plugin? Submit your feedback or contribute to the supported games list by filling out this [Google Form](https://docs.google.com/forms/d/1Wp2sE3oI7JI1smGe_vHYUI_HMI_GLqiK9_X5En8rQdU).
