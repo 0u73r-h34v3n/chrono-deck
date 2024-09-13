@@ -208,7 +208,7 @@ export class GamesMetadata {
     });
   }
 
-  public static getMetadataForApplication(applicationId: number) {
+  public static getApplicationMetadata(applicationId: number) {
     return GamesMetadata.gamesMetadata.get(applicationId);
   }
 

@@ -28,15 +28,16 @@ export function patchAppPage(): Mountable {
           parameters.props?.children?.props?.details;
         const applicationId: number = overview.appid;
 
-        const metadata = GamesMetadata.getMetadataForApplication(applicationId);
+        const applicationMetadata =
+          GamesMetadata.getApplicationMetadata(applicationId);
 
         runInAction(() => {
-          if (metadata?.compatibility_notes) {
+          if (applicationMetadata?.compatibility_notes) {
             // TODO:
             // @ts-expect-error Add types later
             details.vecDeckCompatTestResults = [
               {
-                test_loc_token: metadata.compatibility_notes,
+                test_loc_token: applicationMetadata.compatibility_notes,
                 test_result: 1,
               },
             ];
