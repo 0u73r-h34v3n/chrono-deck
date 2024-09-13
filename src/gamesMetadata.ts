@@ -1,134 +1,58 @@
-import { fetchNoCors, toaster } from "@decky/api";
+import { toaster } from "@decky/api";
+import type {
+  GameMetadata,
+  GameMetadataRaw,
+  GamesMetadataOnlyReleaseDates,
+} from "@type/gameMetadata";
+import type { LocalSavedMetadata } from "@type/localMetadata";
+import { dateToUnixTimestamp } from "@utils/date";
+import { isNil } from "@utils/isNil";
+import logger from "@utils/logger";
+import getAppDetails from "@utils/steam/getAppDetails";
 import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
+import { getMetadata, saveMetdata } from "./backEnd";
 import {
   APP_TYPE,
   SteamDeckCompatibilityCategory,
   StoreCategory,
 } from "./enums";
-import { dateToUnixTimestamp } from "./utils/date";
-import getAppDetails from "./utils/getAppDetails";
-import { isNil } from "./utils/isNil";
-import logger from "./utils/logger";
-
-type GameMetadata = {
-  _id: string;
-  asia_release_date: string;
-  category: Array<StoreCategory>;
-  compatibility: keyof typeof SteamDeckCompatibilityCategory;
-  compatibility_notes: string;
-  developers: Array<string>;
-  europe_release_date: string;
-  full_description: string;
-  launchCommand: string;
-  north_america_release_date: string;
-  platform: string;
-  publishers: Array<string>;
-  short_description: string;
-  titles: Array<string>;
-};
-
-type GameMetadataRaw = Omit<GameMetadata, "category"> & {
-  category: string;
-};
+import { fetchGamesWithSameName, tryConnectToServices } from "./fetch";
+import { getMinValidSyncInterval } from "./utils/number";
+import { identifyPlatformByLaunchCommand } from "./utils/steam/identifyPlatformByLaunchCommand";
 
 export class GamesMetadata {
-  private static API_URL =
-    "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate";
-
-  private static FETCH_HEADERS = {
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      apiKey:
-        "8lTTig5uhPYa5tpl1Buusi9ADSq2i37Xd4xNdt5C2t9cPPyV5a4DQWKsqqSaNVSs",
-    },
-  };
-
-  private static FETCH_BODY = {
-    collection: "games",
-    database: "games_info",
-    dataSource: "Cluster0",
-  };
-
   public static gamesMetadata = new Map<number, GameMetadata>();
+
+  public static localSavedGamesMetadata: LocalSavedMetadata = {};
 
   private static getAllNonSteamAppIds() {
     return Array.from(collectionStore.deckDesktopApps.apps.keys());
   }
 
-  private static async findGamesWithSameTitle(displayName: string) {
-    const response = await fetchNoCors(GamesMetadata.API_URL, {
-      method: "POST",
-      ...GamesMetadata.FETCH_HEADERS,
-      body: JSON.stringify({
-        ...GamesMetadata.FETCH_BODY,
-        pipeline: [
-          {
-            $search: {
-              text: {
-                path: "titles",
-                query: displayName,
-              },
-            },
-          },
-          {
-            $limit: 5,
-          },
-        ],
-      }),
-    });
+  private static getClosestMatchTitleFromGamesList(
+    displayName: string,
+    gamesWithSameTitle: Array<GameMetadataRaw>,
+  ) {
+    let gameTitles: Array<string> = [];
 
-    if (isNil(response)) {
-      // eslint-disable-next-line
-      throw new Error('Null response from "DataBase" API');
+    for (const item of gamesWithSameTitle) {
+      gameTitles = [...gameTitles, ...item.titles];
     }
 
-    if (!response.ok) {
-      throw new Error(
-        `[MetadataData][fetchMetadata] Error response on fetching information about: "${displayName}"`,
-      );
-    }
-
-    const result = await response.json();
-
-    return result.documents;
+    return closest(displayName, gameTitles);
   }
 
-  private static identifyPlatformByLaunchCommand(
-    launchCommand: string,
-  ): Nullable<Platforms> {
-    logger.debug(
-      "[MetadataData][identifyPlatformByLaunchCommand] launchCommand: ",
-      launchCommand,
-    );
+  private static getGameCategoriesFromString(categories: string) {
+    const categoriesAsArray = categories.split(", ") as Array<
+      keyof typeof StoreCategory
+    >;
 
-    if (launchCommand.includes("pcsx")) {
-      return "PS2";
-    }
+    const categoriesIDs = categoriesAsArray
+      .map((category) => StoreCategory[category])
+      .filter((category) => !isNil(category));
 
-    if (launchCommand.includes("roms/nds")) {
-      return "NintendoDS";
-    }
-
-    if (launchCommand.includes("roms/psp")) {
-      return "PSP";
-    }
-
-    if (launchCommand.includes("roms/gc")) {
-      return "GameCube";
-    }
-
-    if (launchCommand.includes("roms/snes")) {
-      return "SNES";
-    }
-
-    logger.error(
-      "[MetadataData][identifyPlatformByLaunchCommand] Unsupported platform. Launch command: ",
-      launchCommand,
-    );
-
-    return undefined;
+    return categoriesIDs;
   }
 
   private static async indetifyExactGame(
@@ -156,18 +80,17 @@ export class GamesMetadata {
       throw new Error('Unsupported file type: "exe"');
     }
 
-    const platform =
-      GamesMetadata.identifyPlatformByLaunchCommand(launchCommand);
+    const platform = identifyPlatformByLaunchCommand(launchCommand);
+    const closestMatchTitleFromGamesList =
+      GamesMetadata.getClosestMatchTitleFromGamesList(
+        displayName,
+        gamesWithSameTitle,
+      );
 
-    let gameTitles: Array<string> = [];
-
-    for (const item of gamesWithSameTitle) {
-      gameTitles = [...gameTitles, ...item.titles];
-    }
-
-    const closestItem = closest(displayName, gameTitles);
     const gameMetadata = gamesWithSameTitle.find(
-      (item) => item.titles.includes(closestItem) && item.platform === platform,
+      (item) =>
+        item.titles.includes(closestMatchTitleFromGamesList) &&
+        item.platform === platform,
     );
 
     if (isNil(gameMetadata)) {
@@ -176,33 +99,53 @@ export class GamesMetadata {
       );
     }
 
-    const categories = gameMetadata.category.split(", ") as Array<
-      keyof typeof StoreCategory
-    >;
-    const categoriesIDs = categories
-      .map((category) => StoreCategory[category])
-      .filter((category) => !isNil(category));
-
     return {
       ...gameMetadata,
-      category: categoriesIDs,
+      category: GamesMetadata.getGameCategoriesFromString(
+        gameMetadata.category,
+      ),
       launchCommand,
     };
   }
 
+  private static getLocallySavedGameMetadataIfPosible(applicationId: number) {
+    const { gamesMetadata } = GamesMetadata.localSavedGamesMetadata;
+
+    if (isNil(gamesMetadata)) {
+      return;
+    }
+
+    return gamesMetadata[applicationId];
+  }
+
   private static async fetchAndSaveGameMetadata(applicationId: number) {
     try {
-      const displayName =
-        appStore.GetAppOverviewByAppID(applicationId)?.display_name;
+      const appOverviewByAppId = appStore.GetAppOverviewByAppID(applicationId);
 
-      const gamesWithSameTitle =
-        await GamesMetadata.findGamesWithSameTitle(displayName);
+      if (isNil(appOverviewByAppId)) {
+        throw new Error(
+          `[GamesMetadata][fetchAndSaveGameMetadata] App overview for APP ID: ${applicationId} is undefined`,
+        );
+      }
 
-      const game = await GamesMetadata.indetifyExactGame(
-        displayName,
-        applicationId,
-        gamesWithSameTitle,
-      );
+      let game: GameMetadata;
+
+      const metadataFromLocallSavedFile =
+        GamesMetadata.getLocallySavedGameMetadataIfPosible(applicationId);
+
+      if (!isNil(metadataFromLocallSavedFile)) {
+        game = metadataFromLocallSavedFile;
+      } else {
+        const { display_name: displayName } = appOverviewByAppId;
+        const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
+
+        game = await GamesMetadata.indetifyExactGame(
+          displayName,
+          applicationId,
+          gamesWithSameTitle,
+        );
+      }
+
       const gameCompatibility =
         SteamDeckCompatibilityCategory[game.compatibility];
 
@@ -218,52 +161,118 @@ export class GamesMetadata {
     }
   }
 
-  public static getMetadataForApplication(applicationId: number) {
-    return GamesMetadata.gamesMetadata.get(applicationId);
+  private static async shouldGameMetadataToBeFetched(
+    nonSteamApplicationsIds: Array<number>,
+  ) {
+    const metadata = await getMetadata();
+
+    GamesMetadata.localSavedGamesMetadata = metadata;
+
+    if (isNil(metadata)) {
+      return true;
+    }
+
+    const { gamesMetadata } = metadata;
+
+    if (isNil(gamesMetadata)) {
+      return true;
+    }
+
+    const hasSameGameList = nonSteamApplicationsIds.every(
+      (applicationId) => gamesMetadata[applicationId],
+    );
+
+    if (hasSameGameList) {
+      return false;
+    }
+
+    const { lastSyncDate: lastSyncDateString } = metadata;
+
+    if (isNil(lastSyncDateString)) {
+      return true;
+    }
+
+    const { syncIntervalDays } = metadata;
+    const lastSyncDate = new Date(lastSyncDateString);
+    const syncInterval = getMinValidSyncInterval(syncIntervalDays);
+
+    const dateToCompareWith = new Date(
+      lastSyncDate.setDate(lastSyncDate.getDate() + syncInterval),
+    );
+
+    if (
+      typeof lastSyncDateString === "string" &&
+      dateToCompareWith > new Date()
+    ) {
+      return false;
+    }
+
+    return true;
   }
 
-  private static async initializeGamesMetadata(applicationsIds: Array<number>) {
+  private static async initializeGamesMetadata(
+    nonSteamApplicationsIds: Array<number>,
+  ) {
     logger.debug(
       "[GamesMetadata][initializeGamesMetadata] Wait for estabilishing connect with API...",
     );
 
-    await waitUntil(
-      async () => {
-        const response = await fetchNoCors(GamesMetadata.API_URL, {
-          method: "POST",
-          ...GamesMetadata.FETCH_HEADERS,
-          body: JSON.stringify({
-            ...GamesMetadata.FETCH_BODY,
-            pipeline: [
-              {
-                $limit: 1,
-              },
-            ],
-          }),
-        });
+    const shouldGameMetadataToBeFetched =
+      await GamesMetadata.shouldGameMetadataToBeFetched(
+        nonSteamApplicationsIds,
+      );
 
-        return !isNil(response) && response.ok;
-      },
-      { timeout: 10000, intervalBetweenAttempts: 500 },
-    );
+    if (shouldGameMetadataToBeFetched) {
+      await waitUntil(
+        async () => {
+          const response = await tryConnectToServices();
 
-    logger.debug(
-      "[GamesMetadata][initializeGamesMetadata] Starting fetching games metadata...",
-    );
+          return !isNil(response) && response.ok;
+        },
+        { timeout: 10000, intervalBetweenAttempts: 500 },
+      );
 
-    toaster.toast({
-      title: "ChronoDeck",
-      body: "Starting fetching metadata for emulated games...",
-    });
+      GamesMetadata.localSavedGamesMetadata.gamesMetadata = {};
 
-    for (const applicationId of applicationsIds) {
+      logger.debug(
+        "[GamesMetadata][initializeGamesMetadata] Starting fetching games metadata...",
+      );
+
+      toaster.toast({
+        title: "ChronoDeck",
+        body: "Starting fetching metadata for emulated games...",
+      });
+    } else {
+      logger.debug(
+        "[GamesMetadata][initializeGamesMetadata] Starting loading games metadata from local file...",
+      );
+
+      toaster.toast({
+        title: "ChronoDeck",
+        body: "Starting loading games metadata from local file...",
+      });
+    }
+
+    for (const applicationId of nonSteamApplicationsIds) {
       await GamesMetadata.fetchAndSaveGameMetadata(applicationId);
+    }
+
+    if (shouldGameMetadataToBeFetched) {
+      saveMetdata(
+        new Date(),
+        GamesMetadata.gamesMetadata,
+        GamesMetadata.localSavedGamesMetadata.syncIntervalDays,
+      );
     }
 
     toaster.toast({
       title: "ChronoDeck",
       body: `Succesefull fetched metadata for ${GamesMetadata.gamesMetadata.size} games.`,
     });
+  }
+
+  public static getApplicationMetadata(applicationId: number) {
+    return GamesMetadata.gamesMetadata.get(applicationId);
   }
 
   public static getGameDevelopersAndPublishers(applicationId: number) {
@@ -313,26 +322,21 @@ export class GamesMetadata {
       return;
     }
 
-    const { europe_release_date } = gameMetadata;
+    const releaseDateKeys: Array<keyof GamesMetadataOnlyReleaseDates> = [
+      "europe_release_date",
+      "north_america_release_date",
+      "asia_release_date",
+    ];
 
-    if (europe_release_date) {
-      const date = new Date(europe_release_date);
+    for (const key of releaseDateKeys) {
+      const releaseDate =
+        gameMetadata[key as keyof GamesMetadataOnlyReleaseDates];
 
-      return dateToUnixTimestamp(date);
-    }
+      if (isNil(releaseDate)) {
+        continue;
+      }
 
-    const { north_america_release_date } = gameMetadata;
-
-    if (north_america_release_date) {
-      const date = new Date(north_america_release_date);
-
-      return dateToUnixTimestamp(date);
-    }
-
-    const { asia_release_date } = gameMetadata;
-
-    if (asia_release_date) {
-      const date = new Date(asia_release_date);
+      const date = new Date(releaseDate);
 
       return dateToUnixTimestamp(date);
     }
@@ -396,6 +400,16 @@ export class GamesMetadata {
     appStore.GetAppOverviewByAppID(
       applicationId,
     ).steam_hw_compat_category_packed = gameCompatibility;
+  }
+
+  public static async forceSync() {
+    await saveMetdata(
+      new Date("2000"),
+      new Map(),
+      GamesMetadata.localSavedGamesMetadata.syncIntervalDays,
+    );
+
+    await GamesMetadata.initialize();
   }
 
   public static async initialize() {
