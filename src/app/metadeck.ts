@@ -1,9 +1,7 @@
 import { type Patch, Router, afterPatch } from "@decky/ui";
-import type { SteamAppOverview } from "@type/steamTypes";
-import { APP_TYPE } from "../enums";
-import { GamesMetadata } from "../gamesMetadata";
-import { debounce } from "../utils/debounce";
-import { isNil } from "../utils/isNil";
+import { GamesMetadata } from "@src/gamesMetadata";
+import { debounce } from "@utils/debounce";
+import { isNil } from "@utils/isNil";
 import type { MountManager } from "./system";
 
 let shouldWeLieToSteam = true;
@@ -57,20 +55,6 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
     patch(): Patch {
       return afterPatch(
         appStore.allApps[0].__proto__,
-        "GetPrimaryAppID",
-        (_, applicationId: number) => {
-          GamesMetadata.updateGameCompatibilityStatusIfNeeded(applicationId);
-
-          return applicationId;
-        },
-      );
-    },
-  });
-
-  mountManager.addPatchMount({
-    patch(): Patch {
-      return afterPatch(
-        appStore.allApps[0].__proto__,
         "GetPerClientData",
         (clientDataState, response) => {
           if (isNil(clientDataState) || isNil(clientDataState[0])) {
@@ -88,26 +72,6 @@ export function getMetaDeckMagicMethods(mountManager: MountManager) {
           }
 
           return response;
-        },
-      );
-    },
-  });
-
-  mountManager.addPatchMount({
-    patch(): Patch {
-      return afterPatch(
-        appStore.allApps[0].__proto__,
-        "GetCanonicalReleaseDate",
-        function (this: SteamAppOverview, _, ret) {
-          if (this.app_type === APP_TYPE.THIRD_PARTY) {
-            const releaseDate = GamesMetadata.getGameReleaseDate(this.appid);
-
-            if (!isNil(releaseDate)) {
-              return releaseDate;
-            }
-          }
-
-          return ret;
         },
       );
     },
