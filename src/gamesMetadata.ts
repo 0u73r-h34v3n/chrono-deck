@@ -1,4 +1,4 @@
-import { fetchNoCors, toaster } from "@decky/api";
+import { toaster } from "@decky/api";
 import type {
   GameMetadata,
   GameMetadataRaw,
@@ -15,68 +15,13 @@ import {
   SteamDeckCompatibilityCategory,
   StoreCategory,
 } from "./enums";
+import { fetchGamesWithSameName, tryConnectToServices } from "./fetch";
 
 export class GamesMetadata {
-  private static API_URL =
-    "https://eu-central-1.aws.data.mongodb-api.com/app/data-vzkgtfx/endpoint/data/v1/action/aggregate";
-
-  private static FETCH_HEADERS = {
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      apiKey:
-        "8lTTig5uhPYa5tpl1Buusi9ADSq2i37Xd4xNdt5C2t9cPPyV5a4DQWKsqqSaNVSs",
-    },
-  };
-
-  private static FETCH_BODY = {
-    collection: "games",
-    database: "games_info",
-    dataSource: "Cluster0",
-  };
-
   public static gamesMetadata = new Map<number, GameMetadata>();
 
   private static getAllNonSteamAppIds() {
     return Array.from(collectionStore.deckDesktopApps.apps.keys());
-  }
-
-  private static async findGamesWithSameTitle(displayName: string) {
-    const response = await fetchNoCors(GamesMetadata.API_URL, {
-      method: "POST",
-      ...GamesMetadata.FETCH_HEADERS,
-      body: JSON.stringify({
-        ...GamesMetadata.FETCH_BODY,
-        pipeline: [
-          {
-            $search: {
-              text: {
-                path: "titles",
-                query: displayName,
-              },
-            },
-          },
-          {
-            $limit: 5,
-          },
-        ],
-      }),
-    });
-
-    if (isNil(response)) {
-      // eslint-disable-next-line
-      throw new Error('Null response from "DataBase" API');
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        `[MetadataData][fetchMetadata] Error response on fetching information about: "${displayName}"`,
-      );
-    }
-
-    const result = await response.json();
-
-    return result.documents;
   }
 
   private static identifyPlatformByLaunchCommand(
@@ -176,17 +121,23 @@ export class GamesMetadata {
 
   private static async fetchAndSaveGameMetadata(applicationId: number) {
     try {
-      const displayName =
-        appStore.GetAppOverviewByAppID(applicationId)?.display_name;
+      const appOverviewByAppId = appStore.GetAppOverviewByAppID(applicationId);
 
-      const gamesWithSameTitle =
-        await GamesMetadata.findGamesWithSameTitle(displayName);
+      if (isNil(appOverviewByAppId)) {
+        throw new Error(
+          `[GamesMetadata][fetchAndSaveGameMetadata] App overview for APP ID: ${applicationId} is undefined`,
+        );
+      }
+
+      const { display_name: displayName } = appOverviewByAppId;
+      const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
 
       const game = await GamesMetadata.indetifyExactGame(
         displayName,
         applicationId,
         gamesWithSameTitle,
       );
+
       const gameCompatibility =
         SteamDeckCompatibilityCategory[game.compatibility];
 
@@ -211,18 +162,7 @@ export class GamesMetadata {
 
     await waitUntil(
       async () => {
-        const response = await fetchNoCors(GamesMetadata.API_URL, {
-          method: "POST",
-          ...GamesMetadata.FETCH_HEADERS,
-          body: JSON.stringify({
-            ...GamesMetadata.FETCH_BODY,
-            pipeline: [
-              {
-                $limit: 1,
-              },
-            ],
-          }),
-        });
+        const response = await tryConnectToServices();
 
         return !isNil(response) && response.ok;
       },
