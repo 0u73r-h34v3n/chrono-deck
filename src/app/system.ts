@@ -7,8 +7,8 @@ export { type Clock, EventBus, MountManager, systemClock, type Mountable };
 
 import { routerHook } from "@decky/api";
 import type { Patch } from "@decky/ui";
+import { waitForServicesInitialized } from "@src/utils/steam/waitForServicesInitialized";
 import { registerForLoginStateChange } from "@utils/steam/registerForLoginStateChange";
-import waitUntil from "async-wait-until";
 import type { Events } from "./events";
 
 const systemClock = {
@@ -19,22 +19,6 @@ const systemClock = {
 
 interface Clock {
   getTimeMs: () => number;
-}
-
-// NOTE: https://github.com/EmuDeck/MetaDeck/blob/main/src/ts/LibraryInitializer.ts#L55
-async function waitForServicesInitialized(): Promise<boolean> {
-  type WindowEx = Window & {
-    App?: { WaitForServicesInitialized?: () => Promise<boolean> };
-  };
-
-  await waitUntil(
-    () => (window as WindowEx).App?.WaitForServicesInitialized != null,
-    { timeout: 5000, intervalBetweenAttempts: 200 },
-  );
-
-  return (
-    (await (window as WindowEx).App?.WaitForServicesInitialized?.()) ?? false
-  );
 }
 
 export interface PatchMountable {
