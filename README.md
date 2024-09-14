@@ -28,6 +28,7 @@
 4. Once per ~`24` hours are executed automatically sync with **DataBase**.
    
    If you want to control `Sync Interval` you can change value of  `syncIntervalDays` from `metadata.json` to **an integer value**.
+   Default value: `1` (one day)
 
 ## Contribute
 
