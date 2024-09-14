@@ -1,7 +1,7 @@
 {
   "name": "chrono-deck",
   "version": "0.1.1",
-  "description": "Decky plugin to show metadata of games runed by emulator.",
+  "description": "A Decky plugin that displays metadata for games running through an emulator.",
   "type": "module",
   "scripts": {
     "build": "shx rm -rf dist && rollup -c",
@@ -12,14 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/0u73r-h34v3n/chrono-deck.git"
   },
-  "keywords": [
-    "decky",
-    "plugin",
-    "steam-deck",
-    "deck",
-    "meta-deck",
-    "meta"
-  ],
+  "keywords": ["decky", "plugin", "steam-deck", "deck", "meta-deck", "meta"],
   "author": "ynhhoJ",
   "license": "GPL-3.0-or-later",
   "bugs": {
@@ -51,10 +44,7 @@
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": [
-        "react",
-        "react-dom"
-      ]
+      "ignoreMissing": ["react", "react-dom"]
     }
   }
 }
