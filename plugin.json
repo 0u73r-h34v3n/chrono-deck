@@ -5,7 +5,7 @@
   "api_version": 1,
   "publish": {
     "tags": ["game", "info", "meta-deck", "meta", "deck", "plugin", "chrono"],
-    "description": "Decky plugin to show metadata of games runed by emulator.",
+    "description": "A Decky plugin that displays metadata for games running through an emulator.",
     "image": "https://opengraph.githubassets.com/1/0u73r-h34v3n/chrono-deck"
   }
 }

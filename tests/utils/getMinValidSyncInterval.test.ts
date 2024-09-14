@@ -56,4 +56,16 @@ describe("getMinValidSyncInterval", () => {
     const result = getMinValidSyncInterval(5.421);
     expect(result).toBe(5);
   });
+
+  it("should return 1 if is sended an object", () => {
+    // @ts-expect-error Only for test purposes
+    const result = getMinValidSyncInterval({});
+    expect(result).toBe(1);
+  });
+
+  it("should return 1 if is sended an array", () => {
+    // @ts-expect-error Only for test purposes
+    const result = getMinValidSyncInterval([]);
+    expect(result).toBe(1);
+  });
 });

@@ -57,30 +57,15 @@ export class GamesMetadata {
 
   private static async indetifyExactGame(
     displayName: string,
-    applicationId: number,
     gamesWithSameTitle: Array<GameMetadataRaw>,
+    launchCommand: string,
+    platform: Platforms,
   ) {
     if (displayName.length === 0) {
       // eslint-disable-next-line
       throw new Error('[identifyExactGame] Empty "displayName" value');
     }
 
-    const appDetails = await getAppDetails(applicationId);
-
-    if (isNil(appDetails)) {
-      throw new Error(
-        `[identifyExactGame] Impossible to get appDetails for "${displayName}"`,
-      );
-    }
-
-    const launchCommand = `${appDetails.strShortcutExe} ${appDetails.strShortcutLaunchOptions}`;
-
-    if (launchCommand.includes(".exe")) {
-      // eslint-disable-next-line
-      throw new Error('Unsupported file type: "exe"');
-    }
-
-    const platform = identifyPlatformByLaunchCommand(launchCommand);
     const closestMatchTitleFromGamesList =
       GamesMetadata.getClosestMatchTitleFromGamesList(
         displayName,
@@ -128,6 +113,24 @@ export class GamesMetadata {
         );
       }
 
+      const { display_name: displayName } = appOverviewByAppId;
+      const appDetails = await getAppDetails(applicationId);
+
+      if (isNil(appDetails)) {
+        throw new Error(
+          `[fetchAndSaveGameMetadata] Impossible to get appDetails for "${displayName}"`,
+        );
+      }
+
+      const launchCommand = `${appDetails.strShortcutExe} ${appDetails.strShortcutLaunchOptions}`;
+      const platform = identifyPlatformByLaunchCommand(launchCommand);
+
+      if (isNil(platform)) {
+        throw new Error(
+          `Unsupported platform for "${displayName}" (ApplicationID: ${applicationId}). Launch command: ${launchCommand}`,
+        );
+      }
+
       let game: GameMetadata;
 
       const metadataFromLocallSavedFile =
@@ -136,13 +139,13 @@ export class GamesMetadata {
       if (!isNil(metadataFromLocallSavedFile)) {
         game = metadataFromLocallSavedFile;
       } else {
-        const { display_name: displayName } = appOverviewByAppId;
         const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
 
         game = await GamesMetadata.indetifyExactGame(
           displayName,
-          applicationId,
           gamesWithSameTitle,
+          launchCommand,
+          platform,
         );
       }
 
@@ -157,7 +160,7 @@ export class GamesMetadata {
 
       GamesMetadata.gamesMetadata.set(applicationId, game);
     } catch (error) {
-      logger.error("[MetadataData][fetchAndSaveGameMetadata] Error: ", error);
+      logger.error("[MetadataData][fetchAndSaveGameMetadata]", error);
     }
   }
 
@@ -267,7 +270,7 @@ export class GamesMetadata {
 
     toaster.toast({
       title: "ChronoDeck",
-      body: `Succesefull fetched metadata for ${GamesMetadata.gamesMetadata.size} games.`,
+      body: `Succesefull fetched metadata for ${GamesMetadata.gamesMetadata.size}/${nonSteamApplicationsIds.length} games.`,
     });
   }
 

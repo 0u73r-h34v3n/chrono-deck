@@ -4,11 +4,11 @@ export function identifyPlatformByLaunchCommand(
   launchCommand: string,
 ): Nullable<Platforms> {
   logger.debug(
-    "[MetadataData][identifyPlatformByLaunchCommand] launchCommand: ",
+    "[identifyPlatformByLaunchCommand] Search platform by launch command: ",
     launchCommand,
   );
 
-  if (launchCommand.includes("pcsx")) {
+  if (launchCommand.includes("roms/ps2")) {
     return "PS2";
   }
 
@@ -27,11 +27,6 @@ export function identifyPlatformByLaunchCommand(
   if (launchCommand.includes("roms/snes")) {
     return "SNES";
   }
-
-  logger.error(
-    "[MetadataData][identifyPlatformByLaunchCommand] Unsupported platform. Launch command: ",
-    launchCommand,
-  );
 
   return undefined;
 }
