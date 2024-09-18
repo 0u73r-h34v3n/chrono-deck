@@ -1,6 +1,6 @@
 {
   "name": "chrono-deck",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A Decky plugin that displays metadata for games running through an emulator.",
   "type": "module",
   "scripts": {
