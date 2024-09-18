@@ -1,16 +1,10 @@
-import {
-  ButtonItem,
-  PanelSection,
-  PanelSectionRow,
-  definePlugin,
-  staticClasses,
-} from "@decky/ui";
-import { FaCloudDownloadAlt, FaSync } from "react-icons/fa";
+import { definePlugin, staticClasses } from "@decky/ui";
 import { FaSketch } from "react-icons/fa6";
 
 import logger from "@utils/logger";
 import { getMetaDeckMagicMethods } from "./app/metadeck";
 import { EventBus, MountManager, systemClock } from "./app/system";
+import QuickAccessPanel from "./components/QuickAccessPanel";
 import { GamesMetadata } from "./gamesMetadata";
 import { patchAppPage } from "./steam-patches/appPage";
 import { patchBHasStoreCategory } from "./steam-patches/bHasStoreCategory";
@@ -18,9 +12,6 @@ import { patchGetAssociations } from "./steam-patches/getAssociations";
 import { patchGetCanonicalReleaseDate } from "./steam-patches/getCanonicalReleaseDate";
 import { patchGetDescriptions } from "./steam-patches/getDescriptions";
 import { patchGetPrimaryAppId } from "./steam-patches/getPrimaryId";
-
-const refreshMetadata = GamesMetadata.initialize;
-const forceSyncMedatadata = GamesMetadata.forceSync;
 
 export default definePlugin(() => {
   logger.debug("Initializing...");
@@ -51,49 +42,7 @@ export default definePlugin(() => {
 
   return {
     title: <div className={staticClasses.Title}>ChronoDeck</div>,
-    content: (
-      <PanelSection>
-        <PanelSectionRow>
-          <ButtonItem
-            onClick={refreshMetadata}
-            layout="below"
-            bottomSeparator="none"
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <FaSync />
-
-              <span style={{ marginLeft: "0.2rem" }}>Refresh</span>
-            </div>
-          </ButtonItem>
-        </PanelSectionRow>
-
-        <PanelSectionRow>
-          <ButtonItem
-            onClick={forceSyncMedatadata}
-            layout="below"
-            bottomSeparator="none"
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <FaCloudDownloadAlt />
-
-              <span style={{ marginLeft: "0.2rem" }}>Force Sync</span>
-            </div>
-          </ButtonItem>
-        </PanelSectionRow>
-      </PanelSection>
-    ),
+    content: <QuickAccessPanel />,
     icon: <FaSketch />,
     onDismount() {
       unregister();
