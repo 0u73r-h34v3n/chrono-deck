@@ -139,7 +139,10 @@ export class GamesMetadata {
       if (!isNil(metadataFromLocallSavedFile)) {
         game = metadataFromLocallSavedFile;
       } else {
-        const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
+        const gamesWithSameTitle = await fetchGamesWithSameName(
+          displayName,
+          platform,
+        );
 
         game = await GamesMetadata.indetifyExactGame(
           displayName,

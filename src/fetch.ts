@@ -18,7 +18,10 @@ const FETCH_BODY = {
   dataSource: "Cluster0",
 };
 
-export async function fetchGamesWithSameName(displayName: string) {
+export async function fetchGamesWithSameName(
+  displayName: string,
+  platform: Platforms,
+) {
   const response = await fetchNoCors(API_URL, {
     method: "POST",
     ...FETCH_HEADERS,
@@ -31,6 +34,11 @@ export async function fetchGamesWithSameName(displayName: string) {
               path: "titles",
               query: displayName,
             },
+          },
+        },
+        {
+          $match: {
+            platform,
           },
         },
         {
