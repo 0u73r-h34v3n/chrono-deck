@@ -23,11 +23,11 @@ export const patchGetDescriptions = {
                 appData.details.unAppID,
               );
 
-              stateTransaction(() => {
-                if (isNil(gameDescription)) {
-                  return;
-                }
+              if (isNil(gameDescription)) {
+                return;
+              }
 
+              stateTransaction(() => {
                 appData.descriptionsData = {
                   strFullDescription: `${gameDescription?.fullDescription}`,
                   strSnippet: `${gameDescription?.shortDescription}`,
