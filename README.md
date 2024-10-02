@@ -4,6 +4,8 @@
 
   [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
   [![Supported Games](https://img.shields.io/badge/18,077_Supported_Games-blue?logo=googlesheets&logoColor=white)](https://docs.google.com/spreadsheets/d/1lF2zJN4S7Ktu8xaLgyymWm9I8kMW7ts2rR6cVj3ZmEA)
+  ![Store Downloads](https://img.shields.io/badge/dynamic/json?url=https://testing.deckbrew.xyz/plugins?query=ChronoDeck&query=$[:1].downloads&suffix=%20installs&label=ChronoDeck)
+
 
   <img src="./images/example.png" alt="Example UI" width="600"/>
 
