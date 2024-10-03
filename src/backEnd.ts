@@ -24,3 +24,11 @@ export async function saveMetdata(
 export async function getMetadata(): Promise<LocalSavedMetadata> {
   return call("get_metadata");
 }
+
+export async function getFileSize(pathToFile: string): Promise<number> {
+  return call("get_file_size", pathToFile);
+}
+
+export async function getFileCreationTime(pathToFile: string): Promise<number> {
+  return call("get_file_creation_time", pathToFile);
+}
