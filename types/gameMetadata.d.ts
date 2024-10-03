@@ -15,6 +15,8 @@ type GameMetadata = {
   publishers: Array<string>;
   short_description: string;
   titles: Array<string>;
+  metacriticScore: Nullable<number>;
+  sizeOnDisk: Nullable<number>;
 };
 
 type GameMetadataRaw = Omit<GameMetadata, "category"> & {
