@@ -6,6 +6,12 @@ metadata_file_name = "metadata.json"
 
 
 class Plugin:
+    async def get_file_size(self, route: str):
+        return os.path.getsize(route)
+
+    async def get_file_creation_time(self, route: str):
+        return os.path.getctime(route)
+
     async def save_metadata(self, data):
         with open(
             os.path.join(decky.DECKY_PLUGIN_RUNTIME_DIR, metadata_file_name),

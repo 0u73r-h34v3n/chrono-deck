@@ -32,16 +32,18 @@ export function patchAppPage(): Mountable {
           GamesMetadata.getApplicationMetadata(applicationId);
 
         runInAction(() => {
-          if (applicationMetadata?.compatibility_notes) {
-            // TODO:
-            // @ts-expect-error Add types later
-            details.vecDeckCompatTestResults = [
-              {
-                test_loc_token: applicationMetadata.compatibility_notes,
-                test_result: 1,
-              },
-            ];
+          if (!applicationMetadata?.compatibility_notes) {
+            return;
           }
+
+          // TODO:
+          // @ts-expect-error Add types later
+          details.vecDeckCompatTestResults = [
+            {
+              test_loc_token: applicationMetadata.compatibility_notes,
+              test_result: 1,
+            },
+          ];
         });
       }
 

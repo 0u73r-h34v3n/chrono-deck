@@ -11,7 +11,12 @@ import logger from "@utils/logger";
 import getAppDetails from "@utils/steam/getAppDetails";
 import waitUntil from "async-wait-until";
 import { closest } from "fastest-levenshtein";
-import { getMetadata, saveMetdata } from "./backEnd";
+import {
+  getFileCreationTime,
+  getFileSize,
+  getMetadata,
+  saveMetdata,
+} from "./backEnd";
 import {
   APP_TYPE,
   SteamDeckCompatibilityCategory,
@@ -19,6 +24,7 @@ import {
 } from "./enums";
 import { fetchGamesWithSameName, tryConnectToServices } from "./fetch";
 import { getMinValidSyncInterval } from "./utils/number";
+import getPathToGameFileByLaunchCommand from "./utils/steam/getPathToGameFileByLaunchCommand";
 import { identifyPlatformByLaunchCommand } from "./utils/steam/identifyPlatformByLaunchCommand";
 
 export class GamesMetadata {
@@ -84,12 +90,20 @@ export class GamesMetadata {
       );
     }
 
+    const pathToGame = getPathToGameFileByLaunchCommand(launchCommand);
+    let fileSize = 0;
+
+    if (!isNil(pathToGame)) {
+      fileSize = await getFileSize(pathToGame);
+    }
+
     return {
       ...gameMetadata,
       category: GamesMetadata.getGameCategoriesFromString(
         gameMetadata.category,
       ),
       launchCommand,
+      sizeOnDisk: fileSize,
     };
   }
 
@@ -139,7 +153,10 @@ export class GamesMetadata {
       if (!isNil(metadataFromLocallSavedFile)) {
         game = metadataFromLocallSavedFile;
       } else {
-        const gamesWithSameTitle = await fetchGamesWithSameName(displayName);
+        const gamesWithSameTitle = await fetchGamesWithSameName(
+          displayName,
+          platform,
+        );
 
         game = await GamesMetadata.indetifyExactGame(
           displayName,
@@ -158,6 +175,15 @@ export class GamesMetadata {
         ? SteamDeckCompatibilityCategory.UNKNOWN
         : gameCompatibility;
 
+      appStore.GetAppOverviewByAppID(applicationId).size_on_disk = isNil(
+        game.sizeOnDisk,
+      )
+        ? 0
+        : game.sizeOnDisk;
+
+      GamesMetadata.updateGameSizeOnDiskIfNeeded(applicationId);
+      GamesMetadata.updateLastTimePlayed(applicationId);
+      GamesMetadata.updateDateAddedToLibrary(applicationId);
       GamesMetadata.gamesMetadata.set(applicationId, game);
     } catch (error) {
       logger.error("[MetadataData][fetchAndSaveGameMetadata]", error);
@@ -359,6 +385,22 @@ export class GamesMetadata {
     return SteamDeckCompatibilityCategory[compatibility];
   }
 
+  public static getGameSizeOnDisk(applicationId: number) {
+    const gameMetadata = GamesMetadata.gamesMetadata.get(applicationId);
+
+    if (isNil(gameMetadata)) {
+      return 0;
+    }
+
+    const { sizeOnDisk } = gameMetadata;
+
+    if (isNil(sizeOnDisk)) {
+      return 0;
+    }
+
+    return sizeOnDisk;
+  }
+
   public static updateGameCompatibilityStatusIfNeeded(applicationId: number) {
     if (applicationId === 0) {
       return;
@@ -400,9 +442,103 @@ export class GamesMetadata {
       `Update "steam_hw_compat_category_packed" for "${displayName}" (ApplicationID: ${applicationId}). Current: "${SteamDeckCompatibilityCategory[steam_hw_compat_category_packed]}" | Wanted: "${SteamDeckCompatibilityCategory[gameCompatibility]}"`,
     );
 
-    appStore.GetAppOverviewByAppID(
-      applicationId,
-    ).steam_hw_compat_category_packed = gameCompatibility;
+    applicationOverview.steam_hw_compat_category_packed = gameCompatibility;
+  }
+
+  public static updateGameSizeOnDiskIfNeeded(applicationId: number) {
+    if (applicationId === 0) {
+      return;
+    }
+
+    const applicationOverview = appStore.GetAppOverviewByAppID(applicationId);
+
+    if (isNil(applicationOverview)) {
+      return;
+    }
+
+    const {
+      display_name: displayName,
+      app_type: appType,
+      size_on_disk: sizeOnDisk,
+    } = applicationOverview;
+
+    if (appType !== APP_TYPE.THIRD_PARTY) {
+      return;
+    }
+
+    if (!GamesMetadata.gamesMetadata.has(applicationId)) {
+      logger.error(
+        `Impossible to update game size on disk for "${displayName}" (ApplicationID: ${applicationId}), because where is no any metadata.`,
+      );
+
+      return;
+    }
+
+    const gameSizeOnDisk = GamesMetadata.getGameSizeOnDisk(applicationId);
+
+    if (gameSizeOnDisk === sizeOnDisk) {
+      return;
+    }
+
+    applicationOverview.size_on_disk = gameSizeOnDisk;
+  }
+
+  public static updateLastTimePlayed(applicationId: number) {
+    if (applicationId === 0) {
+      return;
+    }
+
+    const applicationOverview = appStore.GetAppOverviewByAppID(applicationId);
+
+    if (isNil(applicationOverview)) {
+      return;
+    }
+
+    const {
+      app_type: appType,
+      rt_last_time_played_or_installed: lastTimePlayedOrInstalled,
+    } = applicationOverview;
+
+    if (appType !== APP_TYPE.THIRD_PARTY) {
+      return;
+    }
+
+    applicationOverview.rt_last_time_played = lastTimePlayedOrInstalled;
+  }
+
+  public static updateDateAddedToLibrary(applicationId: number) {
+    if (applicationId === 0) {
+      return;
+    }
+
+    const applicationOverview = appStore.GetAppOverviewByAppID(applicationId);
+
+    if (isNil(applicationOverview)) {
+      return;
+    }
+
+    const { app_type: appType } = applicationOverview;
+
+    if (appType !== APP_TYPE.THIRD_PARTY) {
+      return;
+    }
+
+    const gameMetadata = GamesMetadata.gamesMetadata.get(applicationId);
+
+    if (isNil(gameMetadata)) {
+      return;
+    }
+
+    const { launchCommand } = gameMetadata;
+    const pathToGame = getPathToGameFileByLaunchCommand(launchCommand);
+
+    if (isNil(pathToGame)) {
+      return;
+    }
+
+    getFileCreationTime(pathToGame).then((response) => {
+      applicationOverview.rt_purchased_time = response;
+    });
   }
 
   public static async forceSync() {

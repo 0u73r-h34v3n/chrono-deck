@@ -8,6 +8,9 @@ export const patchGetPrimaryAppId = {
       "GetPrimaryAppID",
       (_, applicationId: number) => {
         GamesMetadata.updateGameCompatibilityStatusIfNeeded(applicationId);
+        GamesMetadata.updateLastTimePlayed(applicationId);
+        GamesMetadata.updateDateAddedToLibrary(applicationId);
+        GamesMetadata.updateGameSizeOnDiskIfNeeded(applicationId);
 
         return applicationId;
       },

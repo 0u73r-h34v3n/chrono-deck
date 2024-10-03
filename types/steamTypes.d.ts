@@ -49,10 +49,9 @@ type SteamAppOverview = {
   gameid: string;
   appid: number;
   display_name: string;
-  // NOTE: Readonly
-  steam_deck_compat_category: number;
+  readonly steam_deck_compat_category: number;
   steam_hw_compat_category_packed: number;
-  size_on_disk: string | undefined; // can use the type of this to determine if an app is installed!
+  size_on_disk: number | undefined; // can use the type of this to determine if an app is installed!
   association: { type: number; name: string }[];
   canonicalAppType: number;
   controller_support: number;
